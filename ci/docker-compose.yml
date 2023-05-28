@@ -1,0 +1,66 @@
+version: '3.9'
+
+x-backend-env:
+  &backend-env
+    DEBUG: ${DEBUG}
+    SECRET_KEY: ${SECRET_KEY}
+
+    DSN__DATABASE: ${DSN__DATABASE}
+    REDIS_LOCATION: 'redis://redis:6379/1'
+
+    TG_BOT_TOKEN: ${TG_BOT_TOKEN}
+
+    TZ: "Europe/Moscow"
+
+x-backend:
+  &backend
+  build:
+    context: ../
+    dockerfile: ci/backend/Dockerfile
+  restart: on-failure
+  tty: true
+  volumes:
+    - "../app/:/var/app"
+  environment:
+    <<: *backend-env
+  depends_on:
+    - postgres
+
+
+services:
+  bot:
+    <<: *backend
+    command: >
+      sh -c "python /var/app/manage.py makemigrations &&
+             python /var/app/manage.py migrate &&
+             python /var/app/manage.py loaddata avito_categories &&
+             python /var/app/manage.py start_bot"
+
+  avito_selenium_parse:
+    <<: *backend
+    command: >
+      python /var/app/manage.py avito_parse
+
+  postgres:
+    image: postgres:15.2
+    volumes:
+      - "pgdata:/var/lib/postgresql/data/pgdata"
+    environment:
+      POSTGRES_USER: telegram_avito_bot
+      POSTGRES_PASSWORD: telegram_avito_bot
+      POSTGRES_DB: telegram_avito_bot
+      # где храним БД внутри контейнера
+      PGDATA: "/var/lib/postgresql/data/pgdata"
+      TZ: "Europe/Moscow"
+
+  redis:
+    image: redis:alpine
+    expose:
+      - 6379
+    volumes:
+      - "redis_data:/data"
+
+
+volumes:
+  pgdata: {}
+  redis_data: {}

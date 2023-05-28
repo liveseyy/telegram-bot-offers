@@ -1,0 +1,10 @@
+DELAY_ZERO: int = 0
+DELAY_5_MIN: int = 5 * 60
+DELAY_10_MIN: int = 10 * 60
+DELAY_15_MIN: int = 15 * 60
+DELAY_1_HOUR: int = 60 * 60
+DELAY_2_HOUR: int = 2 * 60 * 60
+DELAY_8_HOUR: int = 8 * 60 * 60
+DELAY_12_HOUR: int = 12 * 60 * 60
+DELAY_24_HOUR: int = 24 * 60 * 60
+DELAY_48_HOUR: int = 48 * 60 * 60

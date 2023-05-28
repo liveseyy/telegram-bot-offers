@@ -1,0 +1,12 @@
+[
+  {
+    "model": "avito_parse.avitocategory",
+    "pk": 1,
+    "fields": {
+      "title": "Автомобили \uD83D\uDE97",
+      "slug": "avtomobili",
+      "parent_category": null,
+      "filter_form": "Транспорт"
+    }
+  }
+]
