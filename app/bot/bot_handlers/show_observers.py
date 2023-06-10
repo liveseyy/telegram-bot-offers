@@ -1,4 +1,4 @@
-from typing import Optional, List, Set
+from typing import Optional, Set
 
 from aiogram import Dispatcher
 from aiogram.types import CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton, Message
@@ -13,6 +13,8 @@ from avito_parse.models import AvitoUserOfferWatcher
 from bot.bot import bot
 from bot.services.avito_watchers import get_message_with_user_watchers, get_numbered_verbose_watchers
 from bot.bot_handlers.constants import CALLBACK_MY_OBSERVERS, CALLBACK_MY_OBSERVERS_BUTTON_TEXT, MENU_BUTTON_TEXT
+from bot.bot_handlers.start_menu import send_menu_as_answer_on_message
+
 
 CALLBACK_DELETE_WATCHERS = "CALLBACK_DELETE_WATCHERS"
 CALLBACK_CANCEL_DELETE_WATCHERS = "CALLBACK_CANCEL_DELETE_WATCHERS"
@@ -47,7 +49,7 @@ async def show_my_watchers(callback_query: CallbackQuery):
             ]
         )
         await bot.send_message(callback_query.from_user.id, message_to_user,
-                               reply_markup=inline_keyboard, parse_mode="MarkDown")
+                               reply_markup=inline_keyboard, parse_mode="HTML")
 
 
 async def delete_watchers(callback_query: CallbackQuery):
@@ -60,9 +62,9 @@ async def delete_watchers(callback_query: CallbackQuery):
     instruction_to_delete = (
         "Чтобы удалить наблюдения отправьте идентификаторы через пробел.\n\n"
         f"Идентификаторы можно получить пройдя в меню по пути:\n"
-        f"_{MENU_BUTTON_TEXT}"
+        f"<i>{MENU_BUTTON_TEXT}"
         f"\n            ⬇️\n"
-        f"{CALLBACK_MY_OBSERVERS_BUTTON_TEXT}_"
+        f"{CALLBACK_MY_OBSERVERS_BUTTON_TEXT}</i>"
         f"\n\n"
         f"Отправку идентификаторов можно отменить нажав кнопку (отменится автоматически через 1 час):"
     )
@@ -72,7 +74,7 @@ async def delete_watchers(callback_query: CallbackQuery):
         ]
     )
     await bot.send_message(callback_query.from_user.id, instruction_to_delete,
-                           reply_markup=cancel_keyboard, parse_mode="MarkDown")
+                           reply_markup=cancel_keyboard, parse_mode="HTML")
 
 
 async def cancel_delete_watchers(callback_query: CallbackQuery):
@@ -80,10 +82,11 @@ async def cancel_delete_watchers(callback_query: CallbackQuery):
                                  user_telegram_id=callback_query.from_user.id)
     cache.delete(cache_key)
 
-    message_to_user = "Удаление наблюдений отменено ✅"
+    message_to_user = "Удаление наблюдений отменено ❌"
     await bot.send_message(
         callback_query.from_user.id, message_to_user
     )
+    await send_menu_as_answer_on_message(user_id=callback_query.from_user.id)
 
 
 async def handle_delete_watchers_ids(message: Message) -> None:
@@ -127,7 +130,7 @@ async def handle_delete_watchers_ids(message: Message) -> None:
                 tg_user_id,
                 f"Вы уверены что хотите удалить эти наблюдения? 🗑\n\n{numbered_verbose_watchers}",
                 reply_markup=inline_access_keyboard,
-                parse_mode="MarkDown"
+                parse_mode="HTML"
             )
 
 
@@ -147,6 +150,7 @@ async def access_delete_watchers(callback_query: CallbackQuery):
         await bot.send_message(
             user_id, "Наблюдения удалены ✅"
         )
+        await send_menu_as_answer_on_message(user_id=callback_query.from_user.id)
     else:
         await bot.send_message(
             user_id, "Невозможно удалить наблюдения, попробуйте сначала"
@@ -161,7 +165,7 @@ async def retry_delete_watchers(callback_query: CallbackQuery):
                                                         user_telegram_id=user_id)
     cache.delete(cache_key_stage_accessing_delete)
     await bot.send_message(
-        user_id, "Удаление выбранных наблюдений отменено\n"
+        user_id, "Удаление выбранных наблюдений отменено ❌\n"
     )
 
 

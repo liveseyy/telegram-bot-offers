@@ -33,16 +33,16 @@ def parse_datetime(str_datetime: str) -> datetime:
     )
 
 
-def parse_show_up_time_ago(show_up_time_ago: str) -> datetime:
+def parse_show_up_time_ago(show_up_time_ago: str, time_from: datetime) -> datetime:
     dates_words = show_up_time_ago.split(" ")
     result = None
     if "сек" in dates_words[1]:
-        result = timezone.localtime() - timedelta(minutes=1)
+        result = time_from
 
     if "мин" in dates_words[1]:
-        result = timezone.localtime() - timedelta(minutes=int(dates_words[0]) + 1)
+        result = time_from - timedelta(minutes=int(dates_words[0]) + 1)
 
     elif "час" in dates_words[1]:
-        result = timezone.localtime() - timedelta(hours=int(dates_words[0]))
+        result = time_from - timedelta(hours=int(dates_words[0]))
 
     return result

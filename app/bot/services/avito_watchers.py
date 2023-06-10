@@ -39,8 +39,9 @@ def get_numbered_verbose_watchers(watchers: Iterable[AvitoUserOfferWatcher]) -> 
                 specific_filter=watcher.filter.specific_filter
             )
         )
-        numbered_string_watchers += f"{number_of_watcher}. Идентификатор: `{watcher.id}`\n"
-        numbered_string_watchers += f"`{offer_filter_verbose}`\n\n"
+        numbered_string_watchers += f"{number_of_watcher}. {watcher.city}, +{watcher.search_radius}км 🌎\n"
+        numbered_string_watchers += f"Идентификатор: <code>{watcher.id}</code>\n"
+        numbered_string_watchers += f"<code>{offer_filter_verbose}</code>\n\n"
 
         number_of_watcher += 1
 

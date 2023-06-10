@@ -14,10 +14,6 @@ import logging
 from pathlib import Path
 
 
-logging.basicConfig(level=logging.INFO, filename="logs.log", filemode="a",
-                    format="%(asctime)s - %(levelname)s - %(message)s")
-
-
 env = environ.Env()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -31,7 +27,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = env.get_value("SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = env.get_value("DEBUG") == 1
+DEBUG = env.get_value("DEBUG") == "1"
 
 ALLOWED_HOSTS = []
 
@@ -143,4 +139,62 @@ CACHES = {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
         }
     }
+}
+
+RABBITMQ = {
+    "HOSTS": env.get_value("RABBITMQ_HOSTS"),
+    "USER": env.get_value("RABBITMQ_USER"),
+    "PASSWORD": env.get_value("RABBITMQ_PASSWORD"),
+    "VHOST": env.get_value("RABBITMQ_VHOST"),
+}
+
+
+LOGGING_LEVEL = 'DEBUG' if DEBUG else 'WARNING'
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '{asctime} - {name} - {levelname} - {message}',
+            'style': '{',
+        },
+    },
+    'handlers': {
+        'avito_parse': {
+            'level': LOGGING_LEVEL,
+            'class': 'logging.FileHandler',
+            'filename': "avito_parse.log",
+            'formatter': 'verbose',
+        },
+        'send_offers': {
+            'level': LOGGING_LEVEL,
+            'class': 'logging.FileHandler',
+            'filename': "send_offers.log",
+            'formatter': 'verbose',
+        },
+        'bot': {
+            'level': LOGGING_LEVEL,
+            'class': 'logging.FileHandler',
+            'filename': "bot.log",
+            'formatter': 'verbose',
+        },
+    },
+    'loggers': {
+        'avito_parse': {
+            'handlers': ['avito_parse'],
+            'level': LOGGING_LEVEL,
+            'propagate': True,
+        },
+        'send_offers': {
+            'handlers': ['send_offers'],
+            'level': LOGGING_LEVEL,
+            'propagate': False,
+        },
+        'bot': {
+            'handlers': ['bot'],
+            'level': LOGGING_LEVEL,
+            'propagate': False,
+        },
+    },
 }

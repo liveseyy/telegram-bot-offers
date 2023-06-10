@@ -1,6 +1,7 @@
 from dataclasses import dataclass, field
 from abc import ABC
 from typing import Callable, NamedTuple, List
+from datetime import datetime
 
 from avito_parse.filter_forms.filter_option_validators import (
     NONE_INPUT_USER_CHAR,
@@ -27,6 +28,12 @@ class FilterFormResult:
 
 
 class BaseFilterForm(ABC):
+    """
+    Форма заполнения фильтров для поиска объявлений.
+
+    Занимается валидацией заполненной формы, форматировананием сообщений,
+        валидацией объявлений по заданным фильтрам пользователя.
+    """
     MESSAGE: str = ...
 
     PRICE_FROM_OPTION = FilterOption(
@@ -82,13 +89,13 @@ class FilterFormTransport(BaseFilterForm):
               f" В невлияющих параметрах оставьте прочерк." \
               f" Не важно заглавные или прописные буквы.\n\n" \
               f"Нажмите чтобы скопировать:\n" \
-              f"`{BRAND_MODEL_OPTION.verbose_name}: {NONE_INPUT_USER_CHAR}\n" \
+              f"<code>{BRAND_MODEL_OPTION.verbose_name}: {NONE_INPUT_USER_CHAR}\n" \
               f"{YEAR_FROM_OPTION.verbose_name}: {NONE_INPUT_USER_CHAR}\n" \
               f"{YEAR_TO_OPTION.verbose_name}: {NONE_INPUT_USER_CHAR}\n" \
               f"{MILEAGE_FROM_OPTION.verbose_name}: {NONE_INPUT_USER_CHAR}\n" \
               f"{MILEAGE_TO_OPTION.verbose_name}: {NONE_INPUT_USER_CHAR}\n" \
               f"{BaseFilterForm.PRICE_FROM_OPTION.verbose_name}: {NONE_INPUT_USER_CHAR}\n" \
-              f"{BaseFilterForm.PRICE_TO_OPTION.verbose_name}: {NONE_INPUT_USER_CHAR}`\n\n" \
+              f"{BaseFilterForm.PRICE_TO_OPTION.verbose_name}: {NONE_INPUT_USER_CHAR}</code>\n\n" \
               f"Пример заполненной формы:\n\n" \
               f"{BRAND_MODEL_OPTION.verbose_name}: Kia Ceed\n" \
               f"{YEAR_FROM_OPTION.verbose_name}: 2016\n" \
@@ -131,7 +138,10 @@ class FilterFormTransport(BaseFilterForm):
         return result
 
     @classmethod
-    def parsed_offer_is_match_filter(cls, parsed_offer: AvitoParsedOffer, specific_filter: dict) -> bool:
+    def parsed_offer_is_match_filter(cls,
+                                     parsed_offer: AvitoParsedOffer,
+                                     specific_filter: dict) -> bool:
+
         parsed_brand_model, parsed_year = parsed_offer.title.split(",")
         parsed_year = int(parsed_year)
         watcher_brand_model = specific_filter[cls.BRAND_MODEL_OPTION.key]
@@ -155,7 +165,15 @@ class FilterFormTransport(BaseFilterForm):
         if watcher_price_to is not None and not (watcher_price_to <= parsed_price):
             return False
 
-        # TODO пробег
+        if parsed_offer.mileage:
+            parsed_mileage = int(parsed_offer.mileage.replace("км", " ").replace(" ", "").strip())
+            watcher_mileage_from = specific_filter[cls.MILEAGE_FROM_OPTION.key]
+            if watcher_mileage_from is not None and not (watcher_mileage_from >= parsed_mileage):
+                return False
+
+            watcher_mileage_to = specific_filter[cls.MILEAGE_TO_OPTION.key]
+            if watcher_mileage_to is not None and not (watcher_mileage_to <= parsed_mileage):
+                return False
 
         return True
 

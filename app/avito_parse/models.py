@@ -4,6 +4,11 @@ from django.utils import timezone
 from avito_parse.filter_forms.transport import FilterFormTransport
 from bot.models import TelegramUser
 from common.models import BaseModel
+from avito_parse.geo_offer_search_settings import (
+    RU_CITIES_URL_SLUGS_CHOICES, RU_CITIES_CHOICES,
+    DEFAULT_CITY_URL_SLUG, DEFAULT_CITY,
+    DEFAULT_SEARCH_RADIUS
+)
 
 
 class AvitoCategory(BaseModel):
@@ -64,6 +69,10 @@ class AvitoUserOfferWatcher(BaseModel):
     telegram_user = models.ForeignKey(TelegramUser, verbose_name="Владец вотчера", on_delete=models.PROTECT)
     category = models.ForeignKey(AvitoCategory, verbose_name="Наблюдаемая категория", on_delete=models.PROTECT)
     filter = models.ForeignKey(AvitoUserOfferWatcherFilter, on_delete=models.PROTECT)
+
+    city_url_slug = models.CharField(max_length=100, choices=RU_CITIES_URL_SLUGS_CHOICES, default=DEFAULT_CITY_URL_SLUG)
+    city = models.CharField(max_length=200, choices=RU_CITIES_CHOICES, default=DEFAULT_CITY)
+    search_radius = models.PositiveSmallIntegerField(default=DEFAULT_SEARCH_RADIUS)
 
     last_checked_offer_datetime = models.DateTimeField(
         default=timezone.localtime, help_text="Пользователю отправляются объявления выложенные после этого времени"

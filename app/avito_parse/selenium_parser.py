@@ -1,5 +1,9 @@
+import logging
+
 from datetime import datetime
 from typing import NamedTuple, List, Optional, Tuple
+
+from django.utils import timezone
 
 from selenium import webdriver
 from selenium.webdriver.common.by import By
@@ -17,6 +21,9 @@ class AvitoParsedOffer(NamedTuple):
     price: str = None
     show_up_time_ago: str = None
     show_up_date_time: datetime = None
+    city: int = None
+    car_parameters: str = None
+    mileage: str = None # 41 000 км
 
     @classmethod
     def get_fields_to_fill(cls) -> Tuple[str]:
@@ -34,6 +41,7 @@ class AvitoParsedOffer(NamedTuple):
                     separated_price = " " + separated_price
 
             separated_price += " ₽"
+            separated_price = separated_price.strip()
             return separated_price
 
 
@@ -43,7 +51,6 @@ class AvitoOffersParser:
     """
 
     def __init__(self, city_slug: str, category_slug: str, search_radius: int):
-        self._driver = None
         self._OFFER_FIELDS_GETTERS_MAP = {
             "title": (
                 lambda web_offer_element: web_offer_element.find_element(By.CSS_SELECTOR, "[itemprop='name']").text
@@ -59,11 +66,21 @@ class AvitoOffersParser:
                 )
             ),
             "show_up_time_ago": self._get_offer_field_show_up_time_ago,
-            "show_up_date_time": self._get_offer_field_show_up_date_time
+            "show_up_date_time": self._get_offer_field_show_up_date_time,
+            "city": (
+                lambda web_offer_element: (
+                    self._offer_show_up_time_ago_web_element.find_element(
+                        By.XPATH, "../../preceding-sibling::*[1]"
+                    ).text
+                )
+            ),
+            "car_parameters": self._get_web_elem_car_parameters,
+            "mileage": self._get_web_elem_mileage,
         }
 
-        self._offer_show_up_time_ago = None
-
+        self.city_slug = city_slug
+        self.category_slug = category_slug
+        self.search_radius = search_radius
         self.avito_url = (
             f"https://www.avito.ru/"
             f"{city_slug}/{category_slug}?"
@@ -76,18 +93,24 @@ class AvitoOffersParser:
         chrome_options.add_argument('--disable-dev-shm-usage')
         chrome_options.add_argument('--headless')
         chrome_options.add_argument('--start-maximized')
-        self._driver = webdriver.Chrome(chrome_options=chrome_options)
+        self._driver = webdriver.Chrome(options=chrome_options)
+        self._driver.get(self.avito_url)
+
+        self._parse_start_time = None
+        self._offer_show_up_time_ago = None
+        self._offer_show_up_time_ago_web_element = None
+        self._car_parameters = None
 
     def close_driver(self) -> None:
         self._driver.close()
 
     def get_parsed_offers(
-            self, max_pages: Optional[int] = None, search_before_date: datetime = None
+            self, max_pages: Optional[int] = None, search_before_date: datetime = None,
+            search_before_links: Optional[List] = None
     ) -> List[AvitoParsedOffer]:
 
-        assert max_pages or search_before_date
-
-        self._driver.get(self.avito_url)
+        self._driver.refresh()
+        self._parse_start_time = timezone.localtime()
 
         result = []
         current_page = 1
@@ -96,12 +119,17 @@ class AvitoOffersParser:
             need_break = False
             for offer in avito_offers:
                 parsed_offer = self._get_parsed_offer(web_offer_element=offer)
-                result.append(parsed_offer)
-                print(parsed_offer)
+                logging.info(f"FIND OFFER: {parsed_offer}")
                 offer_datetime = parsed_offer.show_up_date_time
-                if offer_datetime and search_before_date and offer_datetime < search_before_date:
+                if (
+                        search_before_date and offer_datetime < search_before_date
+                        or
+                        search_before_links and parsed_offer.link in search_before_links
+                ):
                     need_break = True
                     break
+
+                result.append(parsed_offer)
 
             if not need_break and self._can_parse_next_page(
                     current_page=current_page, max_pages=max_pages
@@ -111,13 +139,12 @@ class AvitoOffersParser:
 
             break
 
-        # self._driver.close()
-
         return result
 
     def _can_parse_next_page(self, current_page: int, max_pages: Optional[int] = None) -> bool:
-        if max_pages is None or current_page < max_pages and self._switch_to_next_page():
-            return True
+        if max_pages is None or current_page < max_pages:
+            if self._switch_to_next_page():
+                return True
 
         return False
 
@@ -147,18 +174,29 @@ class AvitoOffersParser:
 
         show_up_time_ago = time_web_element.text
         self._offer_show_up_time_ago = show_up_time_ago
+        self._offer_show_up_time_ago_web_element = time_web_element
         return show_up_time_ago
 
     def _get_offer_field_show_up_date_time(self, web_offer_element: WebElement) -> Optional[datetime]:
         show_up_time_ago_datetime = None
         if self._offer_show_up_time_ago:
-            # self._offer_show_up_time_ago = "5 минут назад"
-            show_up_time_ago_datetime = parse_show_up_time_ago(show_up_time_ago=self._offer_show_up_time_ago)
+            show_up_time_ago_datetime = parse_show_up_time_ago(
+                show_up_time_ago=self._offer_show_up_time_ago,
+                time_from=self._parse_start_time
+            )
 
         return show_up_time_ago_datetime
 
-    def _get_web_elem_show_up_date_time_verbose(self, web_offer_element: WebElement):
-        self._web_elem_show_up_date_time_verbose = web_offer_element.find_element(
-            By.CSS_SELECTOR, "[data-placement='bottom']"
-        )
-        return self._web_elem_show_up_date_time_verbose
+    def _get_web_elem_car_parameters(self, web_offer_element: WebElement) -> str:
+        self._car_parameters = web_offer_element.find_element(
+            By.CSS_SELECTOR, "[data-marker='item-specific-params']"
+        ).text
+        return self._car_parameters
+
+    def _get_web_elem_mileage(self, web_offer_element: WebElement) -> Optional[str]:
+        if self._car_parameters and "км" in self._car_parameters:
+            car_params_with_mileage = self._car_parameters[:self._car_parameters.index("км") + 2]
+            if len(car_params_with_mileage) == 1:
+                return car_params_with_mileage
+            # 'Битый,26000 км' -> ['Битый', '26000 км']
+            return car_params_with_mileage.split(",")[-1]
