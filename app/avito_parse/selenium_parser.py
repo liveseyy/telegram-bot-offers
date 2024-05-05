@@ -1,5 +1,3 @@
-import logging
-
 from datetime import datetime
 from typing import NamedTuple, List, Optional, Tuple
 
@@ -21,7 +19,7 @@ class AvitoParsedOffer(NamedTuple):
     price: str = None
     show_up_time_ago: str = None
     show_up_date_time: datetime = None
-    city: int = None
+    city: str = None
     car_parameters: str = None
     mileage: str = None # 41 000 км
 
@@ -93,6 +91,7 @@ class AvitoOffersParser:
         chrome_options.add_argument('--disable-dev-shm-usage')
         chrome_options.add_argument('--headless')
         chrome_options.add_argument('--start-maximized')
+        chrome_options.add_argument('--blink-settings=imagesEnabled=false')
         self._driver = webdriver.Chrome(options=chrome_options)
         self._driver.get(self.avito_url)
 
@@ -110,26 +109,26 @@ class AvitoOffersParser:
     ) -> List[AvitoParsedOffer]:
 
         self._driver.refresh()
+        # print(self._driver.title)
         self._parse_start_time = timezone.localtime()
 
-        result = []
+        result = set()
         current_page = 1
         while True:
             avito_offers = self._driver.find_elements(By.CSS_SELECTOR, "[data-marker='item']")
             need_break = False
             for offer in avito_offers:
                 parsed_offer = self._get_parsed_offer(web_offer_element=offer)
-                logging.info(f"FIND OFFER: {parsed_offer}")
                 offer_datetime = parsed_offer.show_up_date_time
                 if (
-                        search_before_date and offer_datetime < search_before_date
-                        or
                         search_before_links and parsed_offer.link in search_before_links
+                        or
+                        search_before_date and offer_datetime < search_before_date
                 ):
                     need_break = True
                     break
 
-                result.append(parsed_offer)
+                result.add(parsed_offer)
 
             if not need_break and self._can_parse_next_page(
                     current_page=current_page, max_pages=max_pages
@@ -139,7 +138,7 @@ class AvitoOffersParser:
 
             break
 
-        return result
+        return list(result)
 
     def _can_parse_next_page(self, current_page: int, max_pages: Optional[int] = None) -> bool:
         if max_pages is None or current_page < max_pages:

@@ -6,19 +6,25 @@ NONE_INPUT_USER_CHAR = "-"
 
 
 def base_validator(func):
-    def wrapper(user_input: str):
+    def wrapper(user_input: str, *args, **kwargs):
         user_input = user_input.strip()
 
         if user_input == NONE_INPUT_USER_CHAR:
             return None
 
-        return func(user_input)
+        return func(user_input, *args, **kwargs)
     return wrapper
 
 
 @base_validator
-def positive_integer(user_input: str):
+def positive_integer_with_spaces(user_input: str, with_spaces: bool = True):
+    """
+    90000
+    90 000 000
+    """
     try:
+        if with_spaces:
+            user_input = user_input.replace(" ", "")
         user_input = int(user_input)
     except ValueError:
         raise BadUserInputOption(option_verbose_name="todo")
@@ -31,7 +37,7 @@ def positive_integer(user_input: str):
 
 @base_validator
 def year(user_input: str):
-    user_input_year = positive_integer(user_input)
+    user_input_year = positive_integer_with_spaces(user_input=user_input, with_spaces=False)
 
     if user_input_year > timezone.localtime().year:
         raise BadUserInputOption(option_verbose_name="todo")

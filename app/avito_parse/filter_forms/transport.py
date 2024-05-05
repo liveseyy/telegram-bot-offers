@@ -1,11 +1,12 @@
 from dataclasses import dataclass, field
 from abc import ABC
 from typing import Callable, NamedTuple, List
-from datetime import datetime
+
+from django.conf import settings
 
 from avito_parse.filter_forms.filter_option_validators import (
     NONE_INPUT_USER_CHAR,
-    positive_integer,
+    positive_integer_with_spaces,
     alpha_numeric_with_spaces,
     year
 )
@@ -39,12 +40,12 @@ class BaseFilterForm(ABC):
     PRICE_FROM_OPTION = FilterOption(
         key="price_from",
         verbose_name="Цена, от",
-        validator=positive_integer,
+        validator=positive_integer_with_spaces,
     )
     PRICE_TO_OPTION = FilterOption(
         key="price_to",
         verbose_name="Цена, до",
-        validator=positive_integer,
+        validator=positive_integer_with_spaces,
     )
 
 
@@ -67,12 +68,12 @@ class FilterFormTransport(BaseFilterForm):
     MILEAGE_FROM_OPTION = FilterOption(
         key="mileage_from",
         verbose_name="Пробег, от",
-        validator=positive_integer,
+        validator=positive_integer_with_spaces,
     )
     MILEAGE_TO_OPTION = FilterOption(
         key="mileage_to",
         verbose_name="Пробег, до",
-        validator=positive_integer,
+        validator=positive_integer_with_spaces,
     )
 
     VERBOSE_NAME_TO_OPTION_MAP = {
@@ -101,15 +102,33 @@ class FilterFormTransport(BaseFilterForm):
               f"{YEAR_FROM_OPTION.verbose_name}: 2016\n" \
               f"{YEAR_TO_OPTION.verbose_name}: 2019\n" \
               f"{MILEAGE_FROM_OPTION.verbose_name}: -\n" \
-              f"{MILEAGE_TO_OPTION.verbose_name}: 90000\n" \
+              f"{MILEAGE_TO_OPTION.verbose_name}: 90 000\n" \
               f"{BaseFilterForm.PRICE_FROM_OPTION.verbose_name}: -\n" \
-              f"{BaseFilterForm.PRICE_TO_OPTION.verbose_name}: 1200000\n\n" \
+              f"{BaseFilterForm.PRICE_TO_OPTION.verbose_name}: 1 200 000\n\n" \
               f"Отправку формы можно отменить нажав кнопку (отменится автоматически через 1 час):" \
+
+    @classmethod
+    def get_formatted_message(cls, user_id: int):
+        return cls.MESSAGE.format(userId=user_id)
 
     @classmethod
     def process_user_filter_form(cls, text: str) -> FilterFormResult:
         filter_result = cls._parse_user_options(text=text)
         return filter_result
+
+    @classmethod
+    def process_user_filter_web_form(cls, data: dict) -> FilterFormResult:
+        filter_result = cls._get_filter_form_result_from_dict(data=data)
+        return filter_result
+
+    @classmethod
+    def _get_filter_form_result_from_dict(cls, data: dict) -> FilterFormResult:
+        result = FilterFormResult()
+        for option in cls.VERBOSE_NAME_TO_OPTION_MAP.values():
+            result.specific_filter[option.key] = data[option.key]
+
+        return result
+
 
     @classmethod
     def _parse_user_options(cls, text: str) -> FilterFormResult:

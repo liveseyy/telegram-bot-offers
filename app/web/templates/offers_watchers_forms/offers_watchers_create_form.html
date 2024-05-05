@@ -1,0 +1,241 @@
+{% extends "base.html" %}
+
+
+{% block page_title %}Форма наблюдателя{% endblock %}
+
+{% block body %}
+
+{# Load the tag library #}
+{% load django_bootstrap5 %}
+
+{# Load CSS and JavaScript #}
+{% bootstrap_css %}
+{% bootstrap_javascript %}
+
+{# Display django.contrib.messages as Bootstrap alerts #}
+{% bootstrap_messages %}
+
+{% load assets %}
+{% load static %}
+<link href="{% assets '/static/css/common.css' %}" rel="stylesheet"  type="text/css">
+
+
+  <div class="row justify-content-md-center">
+    <div class="col-md-auto mt-3" style="text-align: center">
+      <h3>Наблюдение - автомобили</h3>
+    </div>
+  </div>
+
+  {# Display a form #}
+  <form method="post" class="form mt-3">
+    {% csrf_token %}
+
+    <div class="row mb-3">
+
+      <label for="DataListId" class="col-sm-2 col-form-label">{{ form.city.label }}</label>
+
+      <div class="col-sm-10">
+        <input class="form-control {% if form.city.errors %}is-invalid{% endif %}"
+               name="{{ form.city.name }}" list="datalistOptions" id="DataListId"
+             placeholder="{{ form.city.label }}" required
+               value="{% if form.city.value %}{{ form.city.value }}{% elif form.fields.city.initial %}{{ form.fields.city.initial }}{% endif %}">
+        {{ form.city.errors }}
+        <datalist id="datalistOptions">
+          {% for value, _ in form.fields.city.choices %}
+          <option value="{{ value }}">
+          {% endfor %}
+        </datalist>
+      </div>
+    </div>
+
+
+    {% bootstrap_field form.radius_search layout="horizontal" %}
+
+    <div class="mt-4">
+      <hr>
+    </div>
+
+
+    <div class="row mb-3">
+        <label for="DataListBrandId" class="col-sm-2 col-form-label">
+          {{ form.brand_model.label }}
+        </label>
+
+      <div class="col-sm-10">
+        <input class="form-control {% if form.brand_model.errors %}is-invalid{% endif %}"
+               name="{{ form.brand_model.name }}" list="datalistBrandOptions" id="DataListBrandId"
+             placeholder="{{ form.brand_model.label }}" required
+               value="{% if form.brand_model.value %}{{ form.brand_model.value }}{% endif %}">
+        {{ form.brand_model.errors }}
+
+        <datalist id="datalistBrandOptions">
+          {% for value, _ in form.fields.brand_model.choices %}
+            <option value="{{ value }}">
+          {% endfor %}
+        </datalist>
+      </div>
+    </div>
+
+    <div class="row sm-3">
+      <label for="DataListId" class="col-sm-2 col-form-label">Цена, ₽</label>
+    </div>
+    <div class="row justify-content-between mb-3">
+        <div class="col-6">
+        <input v-on:input="formatPriceFrom" v-model="price_from"
+               class="form-control {% if form.price_from.errors %}is-invalid{% endif %}" type="text" name="{{ form.price_from.name }}"
+             placeholder="{{ form.price_from.label }}"
+            value="{% if form.price_from.value %}{{ form.price_from.value }}{% endif %}"
+        >
+          {{ form.price_from.errors }}
+      </div>
+      <div class="col-6">
+        <input v-on:input="formatPriceTo" v-model="price_to"
+               class="form-control {% if form.price_to.errors %}is-invalid{% endif %}"
+               type="text" name="{{ form.price_to.name }}"
+              placeholder="{{ form.price_to.label }}"
+               value="{% if form.price_to.value %}{{ form.price_to.value }}{% endif %}">
+          {{ form.price_to.errors }}
+      </div>
+    </div>
+
+
+
+    <div class="row sm-3">
+      <label for="DataListId" class="col-sm-2 col-form-label">Год выпуска</label>
+    </div>
+    <div class="row justify-content-between mb-3">
+         <div class="col-6">
+        <input v-on:input="formatYearFrom" v-model="year_from"
+                class="form-control {% if form.year_from.errors %}is-invalid{% endif %}"
+               type="number" name="{{ form.year_from.name }}"
+             placeholder="{{ form.year_from.label }}"
+        value="{% if form.year_from.value %}{{ form.year_from.value }}{% endif %}">
+           {{ form.year_from.errors }}
+      </div>
+      <div class="col-6">
+        <input v-on:input="formatYearTo" v-model="year_to"
+               class="form-control {% if form.year_to.errors %}is-invalid{% endif %}"
+               type="number" name="{{ form.year_to.name }}"
+             placeholder="{{ form.year_to.label }}"
+        value="{% if form.year_to.value %}{{ form.year_to.value }}{% endif %}">
+        {{ form.year_to.errors }}
+      </div>
+    </div>
+
+    <div class="row sm-3">
+      <label for="DataListId" class="col-sm-2 col-form-label">Пробег, км</label>
+    </div>
+    <div class="row justify-content-between mb-3">
+                <div class="col-6">
+        <input v-on:input="formatMileageFrom" v-model="mileage_from"
+                class="form-control {% if form.mileage_from.errors %}is-invalid{% endif %}"
+               type="text" name="{{ form.mileage_from.name }}"
+             placeholder="{{ form.mileage_from.label }}"
+        value="{% if form.mileage_from.value %}{{ form.mileage_from.value }}{% endif %}">
+        {{ form.mileage_from.errors }}
+      </div>
+      <div class="col-6">
+        <input  v-on:input="formatMileageTo" v-model="mileage_to"
+                class="form-control {% if form.mileage_to.errors %}is-invalid{% endif %}"
+                type="text" name="{{ form.mileage_to.name }}"
+             placeholder="{{ form.mileage_to.label }}"
+        value="{% if form.mileage_to.value %}{{ form.mileage_to.value }}{% endif %}">
+        {{ form.mileage_to.errors }}
+
+      </div>
+    </div>
+
+    <div class="row justify-content-md-center mt-5 mb-3">
+    <div class="col-xs-auto d-grid gap-2">
+      <button type="submit" class="btn btn-success">
+        Сохранить
+      </button>
+    </div>
+  </div>
+
+  </form>
+
+{% endblock %}
+
+
+{% block js %}
+
+
+<script>
+  var app = Vue.createApp({
+  delimiters: ["[[", "]]"],
+  el: '#app',
+  data: {
+    price_from: document.getElementsByName("price_from")[0].value,
+    price_to: document.getElementsByName("price_to")[0].value,
+
+    year_from: document.getElementsByName("year_from")[0].value,
+    year_to: document.getElementsByName("year_to")[0].value,
+
+    mileage_from: document.getElementsByName("mileage_from")[0].value,
+    mileage_to: document.getElementsByName("mileage_to")[0].value,
+  },
+  methods: {
+    formatPriceFrom: function (){
+      let numb = this.price_from.match(/\d/g);
+      if (numb) {
+        numb = numb.join("");
+        this.price_from = "от " + new Intl.NumberFormat().format(numb);
+      }
+      else this.price_from = "";
+    },
+    formatPriceTo: function (){
+      let numb = this.price_to.match(/\d/g);
+      if (numb) {
+        numb = numb.join("");
+        this.price_to = "до " + new Intl.NumberFormat().format(numb);
+      }
+      else this.price_to = "";
+    },
+
+    formatYearFrom: function (){
+      if (this.year_from.length > 3){
+        let numb = Number(this.year_from);
+
+        if (numb < 1960) {
+          this.year_from = "1960";
+        }
+        if (numb > 2023) {
+          this.year_from = "2023";
+        }
+      }
+    },
+
+    formatYearTo: function (){
+      if (this.year_to.length > 3){
+        let numb = Number(this.year_to);
+
+        if (numb < 1960) {
+          this.year_to = "1960";
+        }
+        if (numb > 2023) {
+          this.year_to = "2023";
+        }
+      }
+    },
+
+    formatMileageFrom: function (){
+      let numb = this.mileage_from.match(/\d/g);
+      if (numb) {
+        numb = numb.join("");
+        this.mileage_from = "от " + new Intl.NumberFormat().format(numb);
+      }
+      else this.mileage_from = "";
+    },
+    formatMileageTo: function (){
+      let numb = this.mileage_to.match(/\d/g);
+      if (numb) {
+        numb = numb.join("");
+        this.mileage_to = "до " + new Intl.NumberFormat().format(numb);
+      }
+      else this.mileage_to = "";
+    },
+  }
+})
+</script>
+{% endblock %}

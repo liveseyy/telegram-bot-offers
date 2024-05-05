@@ -1,0 +1,217 @@
+{% extends "base.html" %}
+
+{% load html_link_to_telegram_bot %}
+
+{# Load the tag library #}
+{% load django_bootstrap5 %}
+{% load static %}
+
+{# Load CSS and JavaScript #}
+{% bootstrap_css %}
+{% bootstrap_javascript %}
+
+{# Display django.contrib.messages as Bootstrap alerts #}
+{% bootstrap_messages %}
+
+
+{% block page_title %}Изменение наблюдений{% endblock %}
+
+{% block jsonScriptData %}
+{{ user_watchers_by_cities|json_script:"user_watchers_by_cities" }}
+{% endblock %}
+
+{% block body %}
+{% csrf_token %}
+<template v-if="Object.keys(user_watchers_by_cities).length">
+    <div class="row justify-content-md-center">
+        <div class="col-md-auto mt-3" style="text-align: center">
+            <h1>Ваши наблюдения</h1>
+        </div>
+    </div>
+
+    <template v-for="(watchers_by_city, city, index) in user_watchers_by_cities" :key="city">
+        <div class="row justify-content-md-center">
+            <div class="col-md-auto mt-3 mb-3" style="text-align: center">
+                <h1>[[ city ]] 🌎</h1>
+            </div>
+        </div>
+
+        <table class="table table-striped table-light text-center align-middle">
+            <thead>
+            <tr>
+                <th scope="col">
+                    <input type="checkbox"
+                           class="checkbox-text"
+                           :id="`main-select-checkbox-${city}`"
+                           :name="`select-checkbox-${city}`"
+                           v-on:click="selectAll(city)">
+
+                </th>
+                <th scope="col">Наблюдение</th>
+                <th scope="col">Радиус</th>
+                <th scope="col">Удалить</th>
+            </tr>
+            </thead>
+            <tbody>
+
+            <template v-for="user_watcher in watchers_by_city" :key="user_watcher.id">
+                <tr :class="{
+                               'table-danger': watcherChoicedToDelete(user_watcher.id)
+                            }"
+                    style="height: 60px;">
+                    <th scope="row">
+                        <input type="checkbox"
+                               :name="`select-checkbox-${city}`"
+                               class="checkbox-text"
+                               :value="user_watcher.id"
+                               :id="`checkbox-${user_watcher.id}`"
+                               v-on:click="selectCheckbox(user_watcher.id)"
+                        >
+                    </th>
+                    <td>
+                        <a href="" style="text-decoration: none; color: #000;">
+                            <div>
+                              <span class="fw-bold">
+                                  [[ user_watcher.filter__specific_filter.brand_model ]]
+                              </span>
+                                <span style="display: inline-block; vertical-align: top; line-height: 20px;">
+                                  <svg xmlns="http://www.w3.org/2000/svg" height="1.1em" viewBox="0 0 576 512"><path
+                                          d="M402.6 83.2l90.2 90.2c3.8 3.8 3.8 10 0 13.8L274.4 405.6l-92.8 10.3c-12.4 1.4-22.9-9.1-21.5-21.5l10.3-92.8L388.8 83.2c3.8-3.8 10-3.8 13.8 0zm162-22.9l-48.8-48.8c-15.2-15.2-39.9-15.2-55.2 0l-35.4 35.4c-3.8 3.8-3.8 10 0 13.8l90.2 90.2c3.8 3.8 10 3.8 13.8 0l35.4-35.4c15.2-15.3 15.2-40 0-55.2zM384 346.2V448H64V128h229.8c3.2 0 6.2-1.3 8.5-3.5l40-40c7.6-7.6 2.2-20.5-8.5-20.5H48C21.5 64 0 85.5 0 112v352c0 26.5 21.5 48 48 48h352c26.5 0 48-21.5 48-48V306.2c0-10.7-12.9-16-20.5-8.5l-40 40c-2.2 2.3-3.5 5.3-3.5 8.5z"/></svg>
+                              </span>
+                            </div>
+
+                            <div v-if="user_watcher.filter__specific_filter.year_from">
+                                Год, от: <span
+                                    class="fw-bold">[[ user_watcher.filter__specific_filter.year_from ]]</span>
+                            </div>
+                            <div v-if="user_watcher.filter__specific_filter.year_to">
+                                Год, до: <span class="fw-bold">[[ user_watcher.filter__specific_filter.year_to ]]</span>
+                            </div>
+
+                            <div v-if="user_watcher.filter__specific_filter.price_from">
+                                Цена, от: <span
+                                    class="fw-bold">[[ user_watcher.filter__specific_filter.price_from ]]</span>
+                            </div>
+
+                            <div v-if="user_watcher.filter__specific_filter.price_to">
+                                Цена, до: <span
+                                    class="fw-bold">[[ user_watcher.filter__specific_filter.price_to ]]</span>
+                            </div>
+
+                            <div v-if="user_watcher.filter__specific_filter.mileage_from">
+                                Пробег, от: <span class="fw-bold">[[ user_watcher.filter__specific_filter.mileage_from ]]</span>
+                            </div>
+
+                            <div v-if="user_watcher.filter__specific_filter.mileage_to">
+                                Пробег, до: <span
+                                    class="fw-bold">[[ user_watcher.filter__specific_filter.mileage_to ]]</span>
+                            </div>
+                        </a>
+                    </td>
+                    <td>[[ user_watcher.search_radius ]]</td>
+                    <td data-bs-toggle="modal" data-bs-target="#ModalSingleDelete"
+                        v-on:click="choiceSingleWatcherToDelete(user_watcher.id)"
+                    >
+                        <span style="color: red;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor"
+                                 class="bi bi-trash" viewBox="0 0 16 16">
+                              <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5Zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5Zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6Z"/>
+                              <path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1ZM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118ZM2.5 3h11V2h-11v1Z"/>
+                            </svg>
+                        </span>
+                    </td>
+                </tr>
+
+            </template>
+            </tbody>
+        </table>
+    </template>
+
+    <button v-show="selectedWatchersIds.size > 0"
+            style="display: none; left: 50%; bottom: 5%; width: 80%; z-index: 1; border: 1px solid transparent; border-color: #000;"
+            type="button"
+            class="btn btn-danger btn-lg btn-block position-fixed translate-middle-x"
+            data-bs-toggle="modal" data-bs-target="#ModalMultipleDelete"
+    >
+        Удалить выбранные<span
+            style="font-size: 115%;"
+            class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-secondary">[[ selectedWatchersIds.size ]]<span
+            class="visually-hidden">unread messages</span></span>
+    </button>
+
+    <div class="modal fade" id="ModalMultipleDelete" tabindex="-1" aria-labelledby="exampleModalLabel"
+         aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Подтверждение</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    Вы уверены, что хотите удалить выбранные наблюдения?
+                </div>
+                <div class="modal-footer row">
+                    <div class="col">
+                        <button type="button" class="btn btn-danger mr-5" style="display: inline-block; width: 75%;">
+                            Да
+                        </button>
+                    </div>
+                    <div class="col">
+                        <button type="button"
+                                class="btn btn-secondary float-end"
+                                data-bs-dismiss="modal"
+                        >
+                            Вернуться назад
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="ModalSingleDelete" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Подтверждение</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    Вы уверены, что хотите удалить это наблюдение?
+                </div>
+                <div class="modal-footer row">
+                    <div class="col">
+                        <button v-on:click="deleteSingleOfferWatcher"
+                                type="button"
+                                class="btn btn-danger mr-5"
+                                style="display: inline-block; width: 75%;"
+                        >
+                            Да
+                        </button>
+                    </div>
+                    <div class="col">
+                        <button type="button"
+                                class="btn btn-secondary float-end"
+                                data-bs-dismiss="modal"
+                        >
+                            Вернуться назад
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</template>
+<template v-else>
+    <div class="row justify-content-md-center">
+        <div class="col-md-auto mt-3" style="text-align: center">
+            <h1 class="mb-3">У вас нет наблюдений. Вы можете создать их в телеграм боте:</h1>
+            {% html_link_to_telegram_bot %}
+        </div>
+    </div>
+</template>
+{% endblock %}
+
+{% block scripts %}
+<script src="{% static 'js/offers_watchers_forms/offers_watchers_edit_form.js' %}"></script>
+{% endblock %}

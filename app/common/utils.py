@@ -1,3 +1,4 @@
+from typing import Iterable
 from asgiref.sync import sync_to_async
 
 
@@ -15,3 +16,12 @@ def method_cache_key(cache_prefix="cache", method="unknown", **kwargs) -> str:
     for k, v in dict(kwargs).items():
         sign_string.append("%s__%s" % (k, v))
     return "@".join(sign_string)
+
+
+def iterable_has_only_digits(iterable: Iterable):
+    return all(
+        [
+            isinstance(watcher_id, int) or (isinstance(watcher_id, str) and watcher_id.isdigit())
+            for watcher_id in iterable
+        ]
+    )

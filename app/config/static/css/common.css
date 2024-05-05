@@ -1,0 +1,41 @@
+body {
+    /*font-family: "Trebuchet ms";*/
+    min-height: 100%;
+}
+
+.container {
+    --bs-gutter-x: 1.5rem;
+    --bs-gutter-y: 0;
+    width: 100%;
+    padding-right: calc(var(--bs-gutter-x) * .9);
+    padding-left: calc(var(--bs-gutter-x) * .9);
+    margin-right: auto;
+    margin-left: auto;
+}
+
+label {
+    font-weight: bold;
+}
+
+.btn-success{
+    font-weight: 600;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+}
+
+.form-control:focus {
+    color: #212529;
+    background-color: #fff;
+    border-color: #86b7fe;
+    outline: 0;
+    box-shadow: 0 0 0 .25rem rgba(76,233,108,.25)
+}
+
+.checkbox-text
+{
+  -ms-transform: scale(1.7); /* IE */
+  -moz-transform: scale(1.7); /* FF */
+  -webkit-transform: scale(1.7); /* Safari and Chrome */
+  -o-transform: scale(1.7); /* Opera */
+  transform: scale(1.7);
+}

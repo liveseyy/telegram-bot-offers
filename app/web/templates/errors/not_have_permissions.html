@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+
+{% load html_link_to_telegram_bot %}
+
+{% block page_title %}Ошибка{% endblock %}
+
+{% block body %}
+
+
+    <div class="row align-items-center vh-100">
+        <div class="col-12" style="text-align: center;">
+          <h1 class="mb-3" style="color: #E43E3E;">ОШИБКА</h1>
+            <p style="font-size: 125%;">Время действия ссылки истекло или она не валидна.</p>
+            <br>
+            <p style="font-size: 125%;">Заполнить форму можно запросив её у телеграм бота:</p>
+            <div class="d-grid gap-2 col-10 mx-auto mt-4">
+                {% html_link_to_telegram_bot %}
+            </div>
+        </div>
+        <div class="col-12"></div>
+  </div>
+{% endblock %}

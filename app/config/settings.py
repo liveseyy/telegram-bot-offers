@@ -9,6 +9,7 @@ https://docs.djangoproject.com/en/4.2/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.2/ref/settings/
 """
+import os
 import environ
 import logging
 from pathlib import Path
@@ -18,6 +19,7 @@ env = environ.Env()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+PROJECT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 
 # Quick-start development settings - unsuitable for production
@@ -29,7 +31,7 @@ SECRET_KEY = env.get_value("SECRET_KEY")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = env.get_value("DEBUG") == "1"
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["*"]
 
 
 # Application definition
@@ -42,9 +44,12 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 
+    'django_bootstrap5',
+
     'avito_parse',
     'bot',
-    'common'
+    'common',
+    'web',
 ]
 
 MIDDLEWARE = [
@@ -62,7 +67,7 @@ ROOT_URLCONF = 'config.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': ["templates"],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -108,7 +113,7 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/4.2/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = 'ru-ru'
 
 TIME_ZONE = 'Europe/Moscow'
 
@@ -121,6 +126,12 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
 
 STATIC_URL = 'static/'
+STATICFILES_DIRS = (os.path.join(PROJECT_DIR, "static"),)
+
+STATIC_ROOT = os.path.join(os.path.dirname(BASE_DIR), "static")
+MEDIA_ROOT = os.path.join(os.path.dirname(BASE_DIR), "media")
+MEDIA_URL = "/media/"
+FILE_UPLOAD_PERMISSIONS = 0o777
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
@@ -129,6 +140,8 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
 TG_BOT_TOKEN = env.get_value("TG_BOT_TOKEN")
+
+WEB_DOMAIN = env.get_value("WEB_DOMAIN")
 
 
 CACHES = {
@@ -146,6 +159,14 @@ RABBITMQ = {
     "USER": env.get_value("RABBITMQ_USER"),
     "PASSWORD": env.get_value("RABBITMQ_PASSWORD"),
     "VHOST": env.get_value("RABBITMQ_VHOST"),
+}
+
+OFFERS_CAR_WATCHER_FORM_CREATE_URL_PREFIX = "offers_watchers_create_form"
+OFFERS_CAR_WATCHER_FORM_EDIT_URL_PREFIX = "offers_watchers_edit_form"
+
+BOOTSTRAP5 = {
+    # Enable or disable Bootstrap 5 server side validation classes (separate from the indicator classes above).
+    'server_side_validation': False,
 }
 
 
@@ -179,6 +200,12 @@ LOGGING = {
             'filename': "bot.log",
             'formatter': 'verbose',
         },
+        'sync_watchers_with_offers': {
+            'level': LOGGING_LEVEL,
+            'class': 'logging.FileHandler',
+            'filename': "sync_watchers_with_offers.log",
+            'formatter': 'verbose',
+        },
     },
     'loggers': {
         'avito_parse': {
@@ -196,5 +223,17 @@ LOGGING = {
             'level': LOGGING_LEVEL,
             'propagate': False,
         },
+        'sync_watchers_with_offers': {
+            'handlers': ['sync_watchers_with_offers'],
+            'level': LOGGING_LEVEL,
+            'propagate': False,
+        },
     },
 }
+
+BUILD = {"assets_version": "1"}
+
+
+PARSE_TIMEOUT_SECONDS = 0
+
+TELEGRAM_BOT_DOMAIN = "avito_offer_helper_bot"

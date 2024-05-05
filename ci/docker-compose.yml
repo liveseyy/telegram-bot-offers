@@ -5,6 +5,8 @@ x-backend-env:
     DEBUG: ${DEBUG}
     SECRET_KEY: ${SECRET_KEY}
 
+    WEB_DOMAIN: ${WEB_DOMAIN}
+
     DSN__DATABASE: ${DSN__DATABASE}
     REDIS_LOCATION: 'redis://redis:6379/1'
     RABBITMQ_HOSTS: 'mq'
@@ -34,6 +36,11 @@ x-backend:
 
 
 services:
+  web:
+    <<: *backend
+    ports:
+      - 8000:8000
+
   bot:
     <<: *backend
     command: >
@@ -42,8 +49,11 @@ services:
              python /var/app/manage.py loaddata avito_categories &&
              python /var/app/manage.py start_bot"
 
-  avito_selenium_parse:
+  avito_parse:
     <<: *backend
+    build:
+      context: ../
+      dockerfile: ci/backend/chrome_driver/Dockerfile
     command: >
       python /var/app/manage.py avito_parse
 
@@ -51,6 +61,11 @@ services:
     <<: *backend
     command: >
       python /var/app/manage.py send_offers
+
+  sync_watchers_with_offers:
+    <<: *backend
+    command: >
+      python /var/app/manage.py sync_watchers_with_offers
 
   postgres:
     image: postgres:15.2

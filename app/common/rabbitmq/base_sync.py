@@ -15,6 +15,7 @@ class BaseSync:
 
     BOT_EXCHANGE = "bot"
     BOT__SEND_OFFERS_QUEUE = "bot__send_offers_to_user"
+    BOT__SYNC_WATCHERS_WITH_OFFERS_QUEUE = "bot__sync_watchers_with_offers"
 
     def connect_mq(self, heartbeat=90):
         parameters = []
@@ -42,3 +43,6 @@ class BaseSync:
 
         self.mq_channel.queue_declare(queue=self.BOT__SEND_OFFERS_QUEUE, durable=True)
         self.mq_channel.queue_bind(self.BOT__SEND_OFFERS_QUEUE, self.BOT_EXCHANGE)
+
+        self.mq_channel.queue_declare(queue=self.BOT__SYNC_WATCHERS_WITH_OFFERS_QUEUE, durable=True)
+        self.mq_channel.queue_bind(self.BOT__SYNC_WATCHERS_WITH_OFFERS_QUEUE, self.BOT_EXCHANGE)

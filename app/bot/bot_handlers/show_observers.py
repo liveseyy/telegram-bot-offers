@@ -1,8 +1,11 @@
+import uuid
+
 from typing import Optional, Set
 
 from aiogram import Dispatcher
 from aiogram.types import CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton, Message
 
+from django.conf import settings
 from django.core.cache import cache
 
 from common.utils import convert_sync_queryset_to_async, method_cache_key
@@ -13,7 +16,7 @@ from avito_parse.models import AvitoUserOfferWatcher
 from bot.bot import bot
 from bot.services.avito_watchers import get_message_with_user_watchers, get_numbered_verbose_watchers
 from bot.bot_handlers.constants import CALLBACK_MY_OBSERVERS, CALLBACK_MY_OBSERVERS_BUTTON_TEXT, MENU_BUTTON_TEXT
-from bot.bot_handlers.start_menu import send_menu_as_answer_on_message
+from bot.bot_handlers.start_menu.handle_menu import send_menu_as_answer_on_message
 
 
 CALLBACK_DELETE_WATCHERS = "CALLBACK_DELETE_WATCHERS"
@@ -37,15 +40,28 @@ def get_user_watchers_ids_to_delete(user_id: int) -> Optional[Set[AvitoUserOffer
 
 
 async def show_my_watchers(callback_query: CallbackQuery):
-    message_to_user = await get_message_with_user_watchers(telegram_user_id=callback_query.from_user.id)
+    user_id = callback_query.from_user.id
+    message_to_user = await get_message_with_user_watchers(telegram_user_id=user_id)
     await bot.answer_callback_query(callback_query.id)
 
     if message_to_user == "Нет наблюдений":
-        await bot.send_message(callback_query.from_user.id, message_to_user)
+        await bot.send_message(user_id, message_to_user)
     else:
+        cache_key = method_cache_key(
+            value_is="session_id",
+            user_telegram_id=user_id
+        )
+        user_session_id = uuid.uuid4()
+        cache.set(cache_key, user_session_id, DELAY_1_HOUR)
         inline_keyboard = InlineKeyboardMarkup(
             inline_keyboard=[
                 [InlineKeyboardButton("Выбрать наблюдения для удаления 🗑", callback_data=CALLBACK_DELETE_WATCHERS)],
+                [InlineKeyboardButton("Удалить/изменить через форму по ссылке 🌐 🗑",
+                                      url=(
+                                          f"{settings.WEB_DOMAIN}/"
+                                          f"{settings.OFFERS_CAR_WATCHER_FORM_EDIT_URL_PREFIX}"
+                                          f"?user_id={user_id}&session_id={user_session_id}"
+                                      ))],
             ]
         )
         await bot.send_message(callback_query.from_user.id, message_to_user,
@@ -77,16 +93,20 @@ async def delete_watchers(callback_query: CallbackQuery):
                            reply_markup=cancel_keyboard, parse_mode="HTML")
 
 
-async def cancel_delete_watchers(callback_query: CallbackQuery):
+def delete_cache_stage_delete_watchers(user_id):
     cache_key = method_cache_key(cache_prefix="show_observers", method="delete_watchers",
-                                 user_telegram_id=callback_query.from_user.id)
+                                 user_telegram_id=user_id)
     cache.delete(cache_key)
+
+
+async def cancel_delete_watchers(callback_query: CallbackQuery):
+    delete_cache_stage_delete_watchers(callback_query.from_user.id)
 
     message_to_user = "Удаление наблюдений отменено ❌"
     await bot.send_message(
         callback_query.from_user.id, message_to_user
     )
-    await send_menu_as_answer_on_message(user_id=callback_query.from_user.id)
+    await send_menu_as_answer_on_message(callback_query.from_user)
 
 
 async def handle_delete_watchers_ids(message: Message) -> None:
@@ -150,7 +170,7 @@ async def access_delete_watchers(callback_query: CallbackQuery):
         await bot.send_message(
             user_id, "Наблюдения удалены ✅"
         )
-        await send_menu_as_answer_on_message(user_id=callback_query.from_user.id)
+        await send_menu_as_answer_on_message(callback_query.from_user)
     else:
         await bot.send_message(
             user_id, "Невозможно удалить наблюдения, попробуйте сначала"
