@@ -1,6 +1,6 @@
 from itertools import groupby
 
-from avito_parse.models import AvitoUserOfferWatcher
+from parse_offers.models import AvitoUserOfferWatcher
 from common.utils import convert_sync_queryset_to_async
 
 

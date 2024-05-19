@@ -1,5 +1,5 @@
 from django.contrib import admin
-from avito_parse.models import AvitoCategory, AvitoUserOfferWatcherFilter, AvitoUserOfferWatcher
+from parse_offers.models import AvitoCategory, AvitoUserOfferWatcherFilter, AvitoUserOfferWatcher
 from bot.models import TelegramUser
 
 

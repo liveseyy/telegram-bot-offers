@@ -1,4 +1,4 @@
-from avito_parse.models import AvitoCategory
+from parse_offers.models import AvitoCategory
 
 
 async def get_avito_car_category():

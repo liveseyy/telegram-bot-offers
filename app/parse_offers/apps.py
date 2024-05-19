@@ -3,4 +3,4 @@ from django.apps import AppConfig
 
 class AvitoParseConfig(AppConfig):
     default_auto_field = 'django.db.models.BigAutoField'
-    name = 'avito_parse'
+    name = 'parse_offers'

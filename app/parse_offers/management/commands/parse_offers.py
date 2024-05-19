@@ -1,20 +1,23 @@
 import logging
-import traceback
 import datetime
+import time
+import random
+
+from time import sleep
 
 from dataclasses import dataclass, field
-from concurrent.futures import ThreadPoolExecutor, as_completed, Future
+from concurrent.futures import ThreadPoolExecutor, Future
 from typing import Dict, List, Optional
 
 from django.conf import settings
 from django.core.management.base import BaseCommand
 from django.utils.timezone import localtime
 
-from avito_parse.selenium_parser import AvitoOffersParser
-from avito_parse.models import AvitoUserOfferWatcher
-from avito_parse.services.parser_offers_executor import ParserOffersExecutor
+from parse_offers.selenium_parsers.avito_parser import AvitoOffersParser
+from parse_offers.models import AvitoUserOfferWatcher
+from parse_offers.services.parser_offers_executor import ParserOffersExecutor
 
-logger = logging.getLogger("avito_parse")
+logger = logging.getLogger("parse_offers")
 
 
 @dataclass
@@ -43,7 +46,7 @@ class Command(BaseCommand):
         self.by_slug_by_radius_parsing_set: Dict[str, Dict[int, ParsingSet]] = {}
 
     def handle(self, *args, **options):
-        logger.info("Start avito_parse")
+        logger.debug("Start parse_offers")
         AvitoUserOfferWatcher.objects.update(last_checked_offer_datetime=localtime())
 
         pool = ThreadPoolExecutor()
@@ -54,6 +57,8 @@ class Command(BaseCommand):
                     .values("city_url_slug", "search_radius")
                     .distinct("city_url_slug", "search_radius")
                 )
+
+                logger.debug(f"Found watchers: {len(slugs_and_search_radius)}")
 
                 for offer_watcher in slugs_and_search_radius.values():
                     slug = offer_watcher["city_url_slug"]
@@ -77,17 +82,19 @@ class Command(BaseCommand):
                             continue
                         else:
                             parsed_links = parsing_set_by_slug_by_radius.current_thread_future.result()
-                            logger.info(f"Task done: {slug} {radius}, result {parsed_links}")
+                            logger.debug(
+                                f"Task {parsing_set_by_slug_by_radius.current_thread_future} done: {slug} {radius},"
+                                f" {parsed_links=}"
+                            )
                             parsing_set_by_slug_by_radius.previous_iters_parsed_links.extend(
                                 parsed_links
                             )
-
+                    # TODO ПРОВЕРИТЬ ПРАВИЛЬНОСТЬ СРАВНЕНИЯ ПО ВРЕМЕНИ И BUTTON NEXT PAGE
                     if len(parsing_set_by_slug_by_radius.previous_iters_parsed_links) > 200:
                         parsing_set_by_slug_by_radius.previous_iters_parsed_links = (
                             parsing_set_by_slug_by_radius.previous_iters_parsed_links[-200:]
                         )
 
-                    logger.info(f"Publish task: {slug} {radius}")
                     parser = parsing_set_by_slug_by_radius.parser
                     if not parser:
                         parser = AvitoOffersParser(
@@ -102,13 +109,17 @@ class Command(BaseCommand):
                         exclude_offers_links=parsing_set_by_slug_by_radius.previous_iters_parsed_links
                     )
 
+                    time.sleep(random.random() * 5)
+
                     parsing_set_by_slug_by_radius.current_thread_future = (
                         pool.submit(parses_executor.execute_parse)
                     )
+                    logger.debug(f"Publish task {parsing_set_by_slug_by_radius.current_thread_future}: {slug} {radius}")
+
+                sleep(1)
 
         except Exception as e:
-            logger.warning(f"Exception while parse: {e}")
-            logger.warning(traceback.print_exc())
+            logger.exception(f"Exception while parse: {e}", exc_info=True)
             pool.shutdown()
             self._close_selenium_drivers()
 

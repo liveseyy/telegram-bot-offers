@@ -1,5 +1,5 @@
 from django.utils import timezone
-from avito_parse.filter_forms.exceptions import BadUserInputOption
+from parse_offers.filter_forms.exceptions import BadUserInputOption
 
 
 NONE_INPUT_USER_CHAR = "-"

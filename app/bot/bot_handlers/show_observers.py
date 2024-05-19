@@ -11,7 +11,7 @@ from django.core.cache import cache
 from common.utils import convert_sync_queryset_to_async, method_cache_key
 from common.cache_delays import DELAY_1_HOUR
 
-from avito_parse.models import AvitoUserOfferWatcher
+from parse_offers.models import AvitoUserOfferWatcher
 
 from bot.bot import bot
 from bot.services.avito_watchers import get_message_with_user_watchers, get_numbered_verbose_watchers

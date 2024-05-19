@@ -1,7 +1,7 @@
 from typing import Iterable
 
 from common.utils import convert_sync_queryset_to_async
-from avito_parse.models import AvitoUserOfferWatcher, AvitoCategory
+from parse_offers.models import AvitoUserOfferWatcher, AvitoCategory
 
 
 async def get_message_with_user_watchers(telegram_user_id: int) -> str:

@@ -23,7 +23,7 @@ x-backend:
   build:
     context: ../
     dockerfile: ci/backend/Dockerfile
-  restart: on-failure
+  restart: always
   tty: true
   volumes:
     - "../app/:/var/app"
@@ -46,16 +46,15 @@ services:
     command: >
       sh -c "python /var/app/manage.py makemigrations --noinput &&
              python /var/app/manage.py migrate --noinput &&
-             python /var/app/manage.py loaddata avito_categories &&
              python /var/app/manage.py start_bot"
 
-  avito_parse:
+  parse_offers:
     <<: *backend
     build:
       context: ../
       dockerfile: ci/backend/chrome_driver/Dockerfile
     command: >
-      python /var/app/manage.py avito_parse
+      python /var/app/manage.py parse_offers
 
   send_offers:
     <<: *backend
@@ -72,25 +71,20 @@ services:
     volumes:
       - "pgdata:/var/lib/postgresql/data/pgdata"
     environment:
-      POSTGRES_USER: telegram_avito_bot
-      POSTGRES_PASSWORD: telegram_avito_bot
-      POSTGRES_DB: telegram_avito_bot
+      POSTGRES_USER: telegram_offers_bot
+      POSTGRES_PASSWORD: telegram_offers_bot
+      POSTGRES_DB: telegram_offers_bot
       # где храним БД внутри контейнера
       PGDATA: "/var/lib/postgresql/data/pgdata"
       TZ: "Europe/Moscow"
 
   redis:
     image: redis:alpine
-    expose:
-      - 6379
     volumes:
       - "redis_data:/data"
 
   mq:
     image: rabbitmq:management-alpine
-    ports:
-      - 5672:5672
-      - 15672:15672
     volumes:
       - "mq_data:/var/lib/rabbitmq"
     environment:

@@ -6,10 +6,10 @@ from django import forms
 from django.core.exceptions import ValidationError
 from django.utils import timezone
 
-from avito_parse.geo_offer_search_settings import RU_CITIES_CHOICES, DEFAULT_CITY
-from avito_parse.avito_cars_brands_models import BRANDS_MODELS_CHOICES
-from avito_parse.services.avito_watcher import create_avito_offer_watcher
-from avito_parse.services.avito_category import get_avito_car_category, get_avito_category_filter_form
+from parse_offers.geo_offer_search_settings import RU_CITIES_CHOICES, DEFAULT_CITY
+from parse_offers.avito_cars_brands_models import BRANDS_MODELS_CHOICES
+from parse_offers.services.avito_watcher import create_avito_offer_watcher
+from parse_offers.services.avito_category import get_avito_car_category, get_avito_category_filter_form
 
 from bot.models import TelegramUser
 

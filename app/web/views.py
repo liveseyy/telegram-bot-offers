@@ -7,8 +7,8 @@ from django.views import View
 from common.shortcuts import CustomSchemeRedirect
 from common.utils import method_cache_key
 
-from avito_parse.avito_cars_brands_models import CAR_MODELS_BY_BRANDS
-from avito_parse.models import AvitoUserOfferWatcher
+from parse_offers.avito_cars_brands_models import CAR_MODELS_BY_BRANDS
+from parse_offers.models import AvitoUserOfferWatcher
 from bot.models import TelegramUser
 from bot.bot_handlers.create_observer import delete_cache_stage_create_watcher
 from bot.bot_handlers.start_menu.handle_menu import send_menu_as_answer_on_message

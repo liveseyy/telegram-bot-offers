@@ -21,5 +21,5 @@ def register_start_and_menu_on_dispatcher(dispatcher: Dispatcher) -> None:
         handle_dont_send_notifications, lambda c: c.data == CALLBACK_DONT_SEND_NOTIFICATIONS
     )
     dispatcher.register_callback_query_handler(
-        handle_dont_send_notifications, lambda c: c.data == CALLBACK_SEND_NOTIFICATIONS
+        handle_turn_on_send_notifications, lambda c: c.data == CALLBACK_SEND_NOTIFICATIONS
     )

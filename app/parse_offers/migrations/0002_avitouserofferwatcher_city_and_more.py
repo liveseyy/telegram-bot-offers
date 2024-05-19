@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('avito_parse', '0001_initial'),
+        ('parse_offers', '0001_initial'),
     ]
 
     operations = [

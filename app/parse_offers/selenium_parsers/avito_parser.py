@@ -1,46 +1,15 @@
 from datetime import datetime
-from typing import NamedTuple, List, Optional, Tuple
+from typing import List, Optional
 
 from django.utils import timezone
 
-from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webelement import WebElement
+from selenium import webdriver
+from webdriver_manager.chrome import ChromeDriverManager
 
-from avito_parse.common import parse_show_up_time_ago
-
-
-class AvitoParsedOffer(NamedTuple):
-    """
-    Данные из объявления авито
-    """
-    title: str = None
-    link: str = None
-    price: str = None
-    show_up_time_ago: str = None
-    show_up_date_time: datetime = None
-    city: str = None
-    car_parameters: str = None
-    mileage: str = None # 41 000 км
-
-    @classmethod
-    def get_fields_to_fill(cls) -> Tuple[str]:
-        return tuple(cls.__annotations__.keys())
-
-    @property
-    def easy_to_read_price(self):
-        if self.price:
-            separated_price = ""
-            i = 0
-            for digit in reversed(self.price):
-                i += 1
-                separated_price = digit + separated_price
-                if i % 3 == 0:
-                    separated_price = " " + separated_price
-
-            separated_price += " ₽"
-            separated_price = separated_price.strip()
-            return separated_price
+from parse_offers.common import parse_show_up_time_ago
+from parse_offers.offer_structure import ParsedOffer
 
 
 class AvitoOffersParser:
@@ -50,9 +19,8 @@ class AvitoOffersParser:
 
     def __init__(self, city_slug: str, category_slug: str, search_radius: int):
         self._OFFER_FIELDS_GETTERS_MAP = {
-            "title": (
-                lambda web_offer_element: web_offer_element.find_element(By.CSS_SELECTOR, "[itemprop='name']").text
-            ),
+            "model_brand": self._get_offer_brand_model,
+            "year": self._get_year,
             "link": (
                 lambda web_offer_element: (
                     web_offer_element.find_element(By.CSS_SELECTOR, "[data-marker='item-title']").get_attribute("href")
@@ -92,13 +60,15 @@ class AvitoOffersParser:
         chrome_options.add_argument('--headless')
         chrome_options.add_argument('--start-maximized')
         chrome_options.add_argument('--blink-settings=imagesEnabled=false')
-        self._driver = webdriver.Chrome(options=chrome_options)
+
+        self._driver = webdriver.Chrome(ChromeDriverManager().install(), options=chrome_options)
         self._driver.get(self.avito_url)
 
         self._parse_start_time = None
         self._offer_show_up_time_ago = None
         self._offer_show_up_time_ago_web_element = None
         self._car_parameters = None
+        self._offer_title = None
 
     def close_driver(self) -> None:
         self._driver.close()
@@ -106,10 +76,9 @@ class AvitoOffersParser:
     def get_parsed_offers(
             self, max_pages: Optional[int] = None, search_before_date: datetime = None,
             search_before_links: Optional[List] = None
-    ) -> List[AvitoParsedOffer]:
+    ) -> List[ParsedOffer]:
 
         self._driver.refresh()
-        # print(self._driver.title)
         self._parse_start_time = timezone.localtime()
 
         result = set()
@@ -148,17 +117,22 @@ class AvitoOffersParser:
         return False
 
     def _switch_to_next_page(self) -> bool:
-        button_to_next_page = self._driver.find_element(
-            By.CSS_SELECTOR, "[data-marker*='pagination-button/next']"
-        )
+        from selenium.common.exceptions import NoSuchElementException
+        try:
+            button_to_next_page = self._driver.find_element(
+                By.CSS_SELECTOR, "[data-marker*='pagination-button/nextPage']"
+            )
+        except NoSuchElementException:
+            return False
+
         if button_to_next_page:
             button_to_next_page.click()
             return True
 
         return False
 
-    def _get_parsed_offer(self, web_offer_element: WebElement) -> AvitoParsedOffer:
-        fields_need_to_parse = AvitoParsedOffer.get_fields_to_fill()
+    def _get_parsed_offer(self, web_offer_element: WebElement) -> ParsedOffer:
+        fields_need_to_parse = ParsedOffer.get_fields_to_fill()
 
         buffer_for_avitor_parsed_offer = {}
         for field_name in fields_need_to_parse:
@@ -166,7 +140,26 @@ class AvitoOffersParser:
                 web_offer_element=web_offer_element
             )
 
-        return AvitoParsedOffer(**buffer_for_avitor_parsed_offer)
+        return ParsedOffer(**buffer_for_avitor_parsed_offer)
+
+    def _get_offer_brand_model(self, web_offer_element: WebElement) -> str:
+        """
+        OMODA C5 1.5 CVT, 2023 -> OMODA C5
+        Chery Tiggo 4 Pro 1.5 CVT, 2023 -> Chery Tiggo 4 Pro
+        Chery Tiggo 4 Pro 1.5 CVT, 2023, 166 км -> Chery Tiggo 4 Pro
+        """
+        title_offer = web_offer_element.find_element(By.CSS_SELECTOR, "[itemprop='name']").text
+        return " ".join(title_offer.split(",")[0].split()[:-2])
+
+    def _get_year(self, web_offer_element: WebElement) -> int:
+        """
+        OMODA C5 1.5 CVT, 2023 -> 2023
+        Chery Tiggo 4 Pro 1.5 CVT, 2023 -> 2023
+        Chery Tiggo 4 Pro 1.5 CVT, 2023, 166 км -> 2023
+        """
+        title_offer = web_offer_element.find_element(By.CSS_SELECTOR, "[itemprop='name']").text
+        title_parts = title_offer.replace(" ", "").split(",")
+        return int(title_parts[1])
 
     def _get_offer_field_show_up_time_ago(self, web_offer_element: WebElement) -> str:
         time_web_element = web_offer_element.find_element(By.CSS_SELECTOR, "[data-marker='item-date']")

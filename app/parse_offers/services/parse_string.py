@@ -1,7 +1,7 @@
 from typing import Union
 
 from common.error_messages import ErrorMessageToUser
-from avito_parse.geo_offer_search_settings import GeoOfferSearchSettings, RU_CITIES_URL_SLUGS_BY_LOWER
+from parse_offers.geo_offer_search_settings import GeoOfferSearchSettings, RU_CITIES_URL_SLUGS_BY_LOWER
 
 
 def parse_geo_offer_search_settings_from_string(s: str) -> Union[GeoOfferSearchSettings, ErrorMessageToUser]:

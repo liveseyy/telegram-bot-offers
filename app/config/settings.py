@@ -11,8 +11,9 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 import os
 import environ
-import logging
 from pathlib import Path
+
+from common.log_utils import get_logging_dir
 
 
 env = environ.Env()
@@ -46,7 +47,7 @@ INSTALLED_APPS = [
 
     'django_bootstrap5',
 
-    'avito_parse',
+    'parse_offers',
     'bot',
     'common',
     'web',
@@ -182,34 +183,34 @@ LOGGING = {
         },
     },
     'handlers': {
-        'avito_parse': {
+        'parse_offers': {
             'level': LOGGING_LEVEL,
             'class': 'logging.FileHandler',
-            'filename': "avito_parse.log",
+            'filename': get_logging_dir("parse_offers"),
             'formatter': 'verbose',
         },
         'send_offers': {
             'level': LOGGING_LEVEL,
             'class': 'logging.FileHandler',
-            'filename': "send_offers.log",
+            'filename': get_logging_dir("send_offers"),
             'formatter': 'verbose',
         },
         'bot': {
             'level': LOGGING_LEVEL,
             'class': 'logging.FileHandler',
-            'filename': "bot.log",
+            'filename': get_logging_dir("bot"),
             'formatter': 'verbose',
         },
         'sync_watchers_with_offers': {
             'level': LOGGING_LEVEL,
             'class': 'logging.FileHandler',
-            'filename': "sync_watchers_with_offers.log",
+            'filename': get_logging_dir("sync_watchers_with_offers"),
             'formatter': 'verbose',
         },
     },
     'loggers': {
-        'avito_parse': {
-            'handlers': ['avito_parse'],
+        'parse_offers': {
+            'handlers': ['parse_offers'],
             'level': LOGGING_LEVEL,
             'propagate': True,
         },

@@ -1,22 +1,24 @@
 from datetime import datetime
-from typing import NamedTuple, List, Optional, Tuple
+from typing import NamedTuple, Tuple
 
 
-class AvitoParsedOffer(NamedTuple):
+class ParsedOffer(NamedTuple):
     """
-    Данные из объявления авито
+    Данные объявления
     """
-    title: str = None
-    link: str = None
-    price: str = None
-    show_up_time_ago: str = None
+
+    model_brand: str  # "OMODA C5"
+    year: int = None  # 2023
+    link: str = None  # https://www.avito.ru/ekaterinburg/avtomobili/omoda_c5_1.5_cvt_2023_3942779690
+    price: str = None  # 2979900
+    show_up_time_ago: str = None  # 3 минуты назад
     show_up_date_time: datetime = None
-    city: str = None
-    car_parameters: str = None
-    mileage: str = None # 41 000 км
+    city: str = None  # Екатеринбург
+    car_parameters: str = None  # 1.5 CVT (147 л.с.), внедорожник, передний, бензин
+    mileage: str = None  # "41 000 км"
 
     @classmethod
-    def get_fields_to_fill(cls) -> Tuple[str]:
+    def get_fields_to_fill(cls) -> Tuple[str, ...]:
         return tuple(cls.__annotations__.keys())
 
     @property

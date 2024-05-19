@@ -21,9 +21,9 @@ from common.utils import convert_sync_queryset_to_async, method_cache_key
 from common.cache_delays import DELAY_1_HOUR
 from common.error_messages import ErrorMessageToUser
 
-from avito_parse.models import AvitoCategory
-from avito_parse.services.avito_watcher import create_avito_offer_watcher
-from avito_parse.services.parse_string import parse_geo_offer_search_settings_from_string
+from parse_offers.models import AvitoCategory
+from parse_offers.services.avito_watcher import create_avito_offer_watcher
+from parse_offers.services.parse_string import parse_geo_offer_search_settings_from_string
 
 CALLBACK_SELECT_CATEGORY_PREFIX = "SELECT_CATEGORY_"
 CALLBACK_CANCEL_SEND_FILTER_FORM = "CALLBACK_CANCEL_SEND_FILTER_FORM"

@@ -5,17 +5,15 @@ import logging
 
 from typing import Optional, List
 
-from django.conf import settings
-from django.db.models import Q, Min, QuerySet
+from django.db.models import Q, Min
 from django.utils import timezone
 
 from common.rabbitmq.base_sync import BaseSync
 
-from avito_parse.models import AvitoUserOfferWatcher, AvitoCategory
-from avito_parse.selenium_parser import AvitoOffersParser
-from avito_parse.filter_forms.transport import AvitoParsedOffer
+from parse_offers.models import AvitoUserOfferWatcher
+from parse_offers.selenium_parsers.avito_parser import AvitoOffersParser
 
-logger = logging.getLogger("avito_parse")
+logger = logging.getLogger("parse_offers")
 
 
 class ParserOffersExecutor(BaseSync):
@@ -32,7 +30,7 @@ class ParserOffersExecutor(BaseSync):
         self.parsing_city_slug = parser.city_slug
         self.parsing_search_radius = parser.search_radius
         self.log_prefix = (
-            f"ParserOffersExecutor: CITY_SLUG = {parser.city_slug}, SEARCH_RADIUS = {parser.search_radius}:"
+            f"ParserOffersExecutor: CITY_SLUG = {parser.city_slug}, SEARCH_RADIUS = {parser.search_radius}, LINK={self.parser.avito_url}:"
         )
 
     def execute_parse(self) -> List[str]:
@@ -45,7 +43,7 @@ class ParserOffersExecutor(BaseSync):
         search_before_date = self._get_last_offer_datetime_for_search_by_query(
             offers_watchers_query=offer_watchers_query
         )
-        logger.info(f"{self.log_prefix} search_before_date = {search_before_date}")
+        logger.debug(f"{self.log_prefix} search_before_date = {search_before_date}")
 
         if not search_before_date:
             return []
@@ -54,7 +52,7 @@ class ParserOffersExecutor(BaseSync):
             search_before_date=search_before_date,
             search_before_links=self.exclude_offers_links
         )
-        logger.info(f"{self.log_prefix} Parsed {len(parsed_offers)} offers: {parsed_offers}")
+        logger.debug(f"{self.log_prefix} Parsed {len(parsed_offers)} offers: {parsed_offers}")
         if not parsed_offers:
             return []
 
@@ -63,11 +61,11 @@ class ParserOffersExecutor(BaseSync):
             {
                 "watchers_city_slug": self.parsing_city_slug,
                 "watchers_search_radius": self.parsing_search_radius,
-                "parsed_offers": list(map(lambda offer: offer._asdict(), parsed_offers))
+                "parsed_offers": list(map(lambda offer: offer._asdict(), parsed_offers))    # noqa
             },
             default=str
         )
-        logger.info(f"publish_data_to_sync: {publish_data_to_sync}")
+        logger.debug(f"publish_data_to_sync: {publish_data_to_sync}")
         self.connect_mq(heartbeat=60 * 2)
         self.mq_channel.basic_publish(
             exchange=self.BOT_EXCHANGE,

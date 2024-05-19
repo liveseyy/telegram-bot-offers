@@ -1,7 +1,7 @@
 from django.db import models
 from common.models import BaseModel
 
-from avito_parse.geo_offer_search_settings import (
+from parse_offers.geo_offer_search_settings import (
     RU_CITIES_URL_SLUGS_CHOICES, RU_CITIES_CHOICES,
     DEFAULT_CITY_URL_SLUG, DEFAULT_CITY,
     DEFAULT_SEARCH_RADIUS

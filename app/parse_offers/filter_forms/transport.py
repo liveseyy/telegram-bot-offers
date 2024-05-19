@@ -1,17 +1,18 @@
+import logging
 from dataclasses import dataclass, field
 from abc import ABC
 from typing import Callable, NamedTuple, List
 
-from django.conf import settings
-
-from avito_parse.filter_forms.filter_option_validators import (
+from parse_offers.filter_forms.filter_option_validators import (
     NONE_INPUT_USER_CHAR,
     positive_integer_with_spaces,
     alpha_numeric_with_spaces,
     year
 )
-from avito_parse.filter_forms.exceptions import BadUserInputOption
-from avito_parse.selenium_parser import AvitoParsedOffer
+from parse_offers.filter_forms.exceptions import BadUserInputOption
+from parse_offers.offer_structure import ParsedOffer
+
+logger = logging.getLogger("sync_watchers_with_offers")
 
 
 class FilterOption(NamedTuple):
@@ -158,41 +159,54 @@ class FilterFormTransport(BaseFilterForm):
 
     @classmethod
     def parsed_offer_is_match_filter(cls,
-                                     parsed_offer: AvitoParsedOffer,
+                                     parsed_offer: ParsedOffer,
                                      specific_filter: dict) -> bool:
+        logger.debug(f"Compare: {parsed_offer=}, {specific_filter=}")
 
-        parsed_brand_model, parsed_year = parsed_offer.title.split(",")
-        parsed_year = int(parsed_year)
+        parsed_brand_model = parsed_offer.model_brand
+        parsed_year = parsed_offer.year
+
         watcher_brand_model = specific_filter[cls.BRAND_MODEL_OPTION.key]
+        logger.debug(f"Compare watcher_brand_model: {watcher_brand_model=}, {parsed_brand_model=}")
         if watcher_brand_model is not None and watcher_brand_model.lower() != parsed_brand_model.lower():
+            logger.debug(f"Miss watcher_brand_model: {watcher_brand_model=}, {parsed_brand_model=}")
             return False
 
         watcher_year_from = specific_filter[cls.YEAR_FROM_OPTION.key]
-        if watcher_year_from is not None and not (watcher_year_from >= parsed_year):
+        logger.debug(f"Compare watcher_brand_model: {watcher_brand_model=}, {parsed_brand_model=}")
+        if watcher_year_from is not None and watcher_year_from > parsed_year:
+            logger.debug(f"Miss watcher_year_from: {watcher_year_from=}, {parsed_year=}")
             return False
 
         watcher_year_to = specific_filter[cls.YEAR_TO_OPTION.key]
-        if watcher_year_to is not None and not (watcher_year_to <= parsed_year):
+        if watcher_year_to is not None and watcher_year_to < parsed_year:
+            logger.debug(f"Miss watcher_year_to: {watcher_year_to=}, {parsed_year=}")
             return False
 
         parsed_price = int(parsed_offer.price)
         watcher_price_from = specific_filter[cls.PRICE_FROM_OPTION.key]
         if watcher_price_from is not None and not (watcher_price_from >= parsed_price):
+            logger.debug(f"Miss watcher_price_from: {watcher_price_from=}, {parsed_price=}")
             return False
 
         watcher_price_to = specific_filter[cls.PRICE_TO_OPTION.key]
         if watcher_price_to is not None and not (watcher_price_to <= parsed_price):
+            logger.debug(f"Miss watcher_price_to: {watcher_price_to=}, {parsed_price=}")
             return False
 
         if parsed_offer.mileage:
             parsed_mileage = int(parsed_offer.mileage.replace("км", " ").replace(" ", "").strip())
             watcher_mileage_from = specific_filter[cls.MILEAGE_FROM_OPTION.key]
             if watcher_mileage_from is not None and not (watcher_mileage_from >= parsed_mileage):
+                logger.debug(f"Miss watcher_mileage_from: {watcher_mileage_from=}, {parsed_mileage=}")
                 return False
 
             watcher_mileage_to = specific_filter[cls.MILEAGE_TO_OPTION.key]
             if watcher_mileage_to is not None and not (watcher_mileage_to <= parsed_mileage):
+                logger.debug(f"Miss watcher_mileage_to: {watcher_mileage_to=}, {parsed_mileage=}")
                 return False
+
+        logger.debug(f"Found match offer: {parsed_offer=}, {specific_filter=}")
 
         return True
 

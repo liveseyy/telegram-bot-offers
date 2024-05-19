@@ -1,7 +1,7 @@
-from avito_parse.models import AvitoCategory, AvitoUserOfferWatcher, AvitoUserOfferWatcherFilter
+from parse_offers.models import AvitoCategory, AvitoUserOfferWatcher, AvitoUserOfferWatcherFilter
 from bot.models import TelegramUser
-from avito_parse.filter_forms.transport import FilterFormResult
-from avito_parse.geo_offer_search_settings import RU_CITIES_URL_SLUGS
+from parse_offers.filter_forms.transport import FilterFormResult
+from parse_offers.geo_offer_search_settings import RU_CITIES_URL_SLUGS
 
 
 async def create_avito_offer_watcher(tg_user_id: int, category: AvitoCategory, filter_form_result: FilterFormResult):

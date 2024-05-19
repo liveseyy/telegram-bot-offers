@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('avito_parse', '0002_avitouserofferwatcher_city_and_more'),
+        ('parse_offers', '0002_avitouserofferwatcher_city_and_more'),
     ]
 
     operations = [

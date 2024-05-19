@@ -1,6 +1,6 @@
 [
   {
-    "model": "avito_parse.avitocategory",
+    "model": "parse_offers.avitocategory",
     "pk": 1,
     "fields": {
       "title": "Автомобили \uD83D\uDE97",
