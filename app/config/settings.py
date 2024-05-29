@@ -141,7 +141,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
 TG_BOT_TOKEN = env.get_value("TG_BOT_TOKEN")
-
+TG_BOT_USERNAME = env.get_value("TG_BOT_USERNAME")
 WEB_DOMAIN = env.get_value("WEB_DOMAIN")
 
 
@@ -172,7 +172,6 @@ BOOTSTRAP5 = {
 
 
 LOGGING_LEVEL = 'DEBUG' if DEBUG else 'WARNING'
-
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
@@ -195,6 +194,12 @@ LOGGING = {
             'filename': get_logging_dir("send_offers"),
             'formatter': 'verbose',
         },
+        'aiogram': {
+            'level': LOGGING_LEVEL,
+            'class': 'logging.FileHandler',
+            'filename': get_logging_dir("aiogram"),
+            'formatter': 'verbose',
+        },
         'bot': {
             'level': LOGGING_LEVEL,
             'class': 'logging.FileHandler',
@@ -212,10 +217,15 @@ LOGGING = {
         'parse_offers': {
             'handlers': ['parse_offers'],
             'level': LOGGING_LEVEL,
-            'propagate': True,
+            'propagate': False,
         },
         'send_offers': {
             'handlers': ['send_offers'],
+            'level': LOGGING_LEVEL,
+            'propagate': False,
+        },
+        'aiogram': {
+            'handlers': ['aiogram'],
             'level': LOGGING_LEVEL,
             'propagate': False,
         },
@@ -234,7 +244,4 @@ LOGGING = {
 
 BUILD = {"assets_version": "1"}
 
-
 PARSE_TIMEOUT_SECONDS = 0
-
-TELEGRAM_BOT_DOMAIN = "avito_offer_helper_bot"

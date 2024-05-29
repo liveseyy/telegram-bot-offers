@@ -3,6 +3,7 @@ from django.http import HttpResponse, JsonResponse
 from django.core.cache import cache
 from django.core.exceptions import ObjectDoesNotExist
 from django.views import View
+from django.conf import settings
 
 from common.shortcuts import CustomSchemeRedirect
 from common.utils import method_cache_key
@@ -92,7 +93,7 @@ class OfferWatchersCreateFormView(BaseOfferWatchersFormView):
             )
             await send_menu_as_answer_on_message(telegram_user=user)
 
-            return CustomSchemeRedirect(f"tg://resolve?domain=avito_offer_helper_bot")
+            return CustomSchemeRedirect(f"tg://resolve?domain={settings.TG_BOT_USERNAME}")
 
         return render(
             request,
@@ -128,23 +129,9 @@ class OfferWatchersEditFormView(BaseOfferWatchersFormView):
                 request=request
             )
 
-
-        # form = OfferWatchersForm(request.POST, tg_user=user)
-        # if form.is_valid():
-        #     await form.update_user_city_and_radius()
-        #     await form.create_offer_watcher()
-        #     delete_cache_stage_create_watcher(user.telegram_id)
-        #     await bot.send_message(
-        #         user.telegram_id, "Наблюдение создано ✅"
-        #     )
-        #     await send_menu_as_answer_on_message(user_id=user.telegram_id)
-        #
-        #     return CustomSchemeRedirect(f"tg://resolve?domain=avito_offer_helper_bot")
-
         return render(
             request,
             self.response_template,
-            # {"form": form, "car_models_by_brands": CAR_MODELS_BY_BRANDS}
         )
 
     async def delete(self, request) -> JsonResponse:

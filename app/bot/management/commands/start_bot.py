@@ -11,6 +11,7 @@ from bot.bot_handlers.create_observer import register_create_observer_on_dispatc
 from bot.bot_handlers.show_observers import register_show_my_observers
 from bot.bot_handlers.unknown_command import register_handle_unknown_command
 
+
 logger = logging.getLogger("bot")
 
 

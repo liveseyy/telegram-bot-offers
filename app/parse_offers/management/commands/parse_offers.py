@@ -61,6 +61,8 @@ class Command(BaseCommand):
                 logger.debug(f"Found watchers: {len(slugs_and_search_radius)}")
 
                 for offer_watcher in slugs_and_search_radius.values():
+                    sleep(random.randint(0, 20))
+
                     slug = offer_watcher["city_url_slug"]
                     radius = offer_watcher["search_radius"]
 
@@ -109,14 +111,12 @@ class Command(BaseCommand):
                         exclude_offers_links=parsing_set_by_slug_by_radius.previous_iters_parsed_links
                     )
 
-                    time.sleep(random.random() * 5)
-
                     parsing_set_by_slug_by_radius.current_thread_future = (
                         pool.submit(parses_executor.execute_parse)
                     )
                     logger.debug(f"Publish task {parsing_set_by_slug_by_radius.current_thread_future}: {slug} {radius}")
 
-                sleep(1)
+                time.sleep(random.random() * 20)
 
         except Exception as e:
             logger.exception(f"Exception while parse: {e}", exc_info=True)

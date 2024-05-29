@@ -15,6 +15,7 @@ x-backend-env:
     RABBITMQ_VHOST: ${MQ_VHOST}
 
     TG_BOT_TOKEN: ${TG_BOT_TOKEN}
+    TG_BOT_USERNAME: ${TG_BOT_USERNAME}
 
     TZ: "Europe/Moscow"
 

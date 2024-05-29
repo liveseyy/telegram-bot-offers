@@ -9,7 +9,7 @@ def base_validator(func):
     def wrapper(user_input: str, *args, **kwargs):
         user_input = user_input.strip()
 
-        if user_input == NONE_INPUT_USER_CHAR:
+        if user_input == NONE_INPUT_USER_CHAR or user_input == "":
             return None
 
         return func(user_input, *args, **kwargs)

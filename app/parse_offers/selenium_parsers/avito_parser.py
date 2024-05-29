@@ -1,3 +1,7 @@
+import logging
+import threading
+import time
+
 from datetime import datetime
 from typing import List, Optional
 
@@ -10,6 +14,9 @@ from webdriver_manager.chrome import ChromeDriverManager
 
 from parse_offers.common import parse_show_up_time_ago
 from parse_offers.offer_structure import ParsedOffer
+
+
+logger = logging.getLogger("parse_offers")
 
 
 class AvitoOffersParser:
@@ -83,8 +90,13 @@ class AvitoOffersParser:
 
         result = set()
         current_page = 1
+        # Подождите, идет загрузка.
+        time.sleep(5)
+
         while True:
             avito_offers = self._driver.find_elements(By.CSS_SELECTOR, "[data-marker='item']")
+            # logger.debug(f"thread={threading.get_native_id()} - {self._driver.page_source=}")
+            logger.debug(f"thread={threading.get_native_id()} - {avito_offers=}")
             need_break = False
             for offer in avito_offers:
                 parsed_offer = self._get_parsed_offer(web_offer_element=offer)

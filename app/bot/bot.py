@@ -1,6 +1,7 @@
 from aiogram import Bot
 
 from django.conf import settings
+
 """
 Бот отдельно чтобы не было рекурсивных импортов.
 

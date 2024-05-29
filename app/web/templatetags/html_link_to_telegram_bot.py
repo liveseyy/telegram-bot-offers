@@ -9,7 +9,7 @@ register = template.Library()
 def html_link_to_telegram_bot() -> str:
     link = mark_safe(
         f"""
-        <a class="btn btn-primary btn-lg" type="button" href="tg://resolve?domain={settings.TELEGRAM_BOT_DOMAIN}">
+        <a class="btn btn-primary btn-lg" type="button" href="tg://resolve?domain={settings.TG_BOT_USERNAME}">
             Перейти в телеграм бота
             <span style="margin-left: 10px; padding-bottom: 5px; display: inline-block;">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-telegram" viewBox="0 0 16 16">
