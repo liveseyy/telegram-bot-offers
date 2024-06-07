@@ -52,6 +52,7 @@ class Command(BaseCommand):
         pool = ThreadPoolExecutor()
         try:
             while True:
+                sleep(1)
                 slugs_and_search_radius = (
                     AvitoUserOfferWatcher.objects.filter(is_deleted=False)
                     .values("city_url_slug", "search_radius")
@@ -61,7 +62,7 @@ class Command(BaseCommand):
                 logger.debug(f"Found watchers: {len(slugs_and_search_radius)}")
 
                 for offer_watcher in slugs_and_search_radius.values():
-                    sleep(random.randint(0, 20))
+                    sleep(random.randint(1, 3))
 
                     slug = offer_watcher["city_url_slug"]
                     radius = offer_watcher["search_radius"]
@@ -115,8 +116,6 @@ class Command(BaseCommand):
                         pool.submit(parses_executor.execute_parse)
                     )
                     logger.debug(f"Publish task {parsing_set_by_slug_by_radius.current_thread_future}: {slug} {radius}")
-
-                time.sleep(random.random() * 20)
 
         except Exception as e:
             logger.exception(f"Exception while parse: {e}", exc_info=True)
